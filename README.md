@@ -27,9 +27,9 @@ We have a simple indicator to check whether the packet is a `module configuraton
 one parse action is a 25-bit configuration, each user (i.e., identified by VLAN ID) has 100 such parse actions.
 
 * `[24:22]` reserved
-* `[21:10]`  byte number from 0
-* `[9:8]` container type number, `01` for 2B, `10` for 4B, `11` for 6B
-* `[7:1]` container index
+* `[20:9]`  byte number from 0
+* `[8:7]` container type number, `01` for 2B, `10` for 4B, `11` for 6B
+* `[6:1]` container index
 * `[0]` validity bit
 
 ---
