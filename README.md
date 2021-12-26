@@ -43,7 +43,7 @@ After parsing, the pipeline works on the PHV generated. In our design, the PHV c
 
 Above is the format of PHV in our design  ```|64x6B|64x4B|64x2B|256b|```. Basically, we have 3 types of PHV containers of different sizes (i.e., 6B, 4B, 2B) and one giant container for metadata, which is in total 256b:
 
-  * `6144b`:  the packet header value container. It contains 8x 6B, 4B and 2B to store values that will be used in the match-action stage.
+  * `6144b`:  the packet header value container. It contains 64x 6B, 4B and 2B to store values that will be used in the match-action stage.
   * `256b`:  the metadata attached to the packet. The lower 128b, namely `[127:0]`, is for the NetFPGA's `tuser` so that it follows the specifications (e.g., SRC, DST ports, etc.) of NetFPGA. The 128th bit is termed as drop mark, where 1 means dropping.
 
 > * `[127:0]` is for the NetFPGA's `tuser` data.
@@ -67,7 +67,7 @@ Basically, we have allocated `32` containers for each type and appended an compa
 - comparison opcode is a `2b` width digit, where `00` --> `>`, `01` --> `>=`, `11` --> `==`.
 - operand is a `9b` width digit, where the bit `operand[8]` indicates whether it is a immediate operand, if so, the next 8 bits respresents the value. Otherwise, the `operand[7:5]` is the index and `operand[4:3]` is the type of PHV container. (XG: 这里我感觉是不需要改，其实之前没有用到过，但不是很确定）
 
-Thus, we can get a key of 2*(6+4+2)B+1=3073b, where and the last bit is the result of comparator.
+Thus, we can get a key of 32*(6+4+2)B+1=3073b, where and the last bit is the result of comparator.
 
 Together with a `key mask` obtained from RAM using `VLAN ID`, the key is fed to the next module.
 
@@ -181,8 +181,8 @@ Each module will check whether it is the target of the packet: if so, the module
   3. **Mask Table**: This is a ***3073x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
   4. **Lookup Table** (TCAM): This is a ***205x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**. (XG:这里我暂时不知道数字应该怎么改)
   5. **Action Table**: This is a ***12352x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
-    6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
-    7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
+  6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
+  7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
 
   #### Data Structures
 
