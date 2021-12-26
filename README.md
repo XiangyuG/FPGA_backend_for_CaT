@@ -24,12 +24,12 @@ We have a simple indicator to check whether the packet is a `module configuraton
 
 #### Parse Action
 
-one parse action is a 16-bit configuration, each user (i.e., identified by VLAN ID) has 10 such parse actions.
+one parse action is a 25-bit configuration, each user (i.e., identified by VLAN ID) has 100 such parse actions.
 
-* `[15:13]` reserved
-* `[12:6]`  byte number from 0
-* `[5:4]` container type number, `01` for 2B, `10` for 4B, `11` for 6B
-* `[3:1]` container index
+* `[24:22]` reserved
+* `[21:10]`  byte number from 0
+* `[9:8]` container type number, `01` for 2B, `10` for 4B, `11` for 6B
+* `[7:1]` container index
 * `[0]` validity bit
 
 ---
@@ -41,9 +41,9 @@ After parsing, the pipeline works on the PHV generated. In our design, the PHV c
   ![phv](./imgs/phv.png)
 
 
-Above is the format of PHV in our design  ```|8x6B|8x4B|8x2B|256b|```. Basically, we have 3 types of PHV containers of different sizes (i.e., 6B, 4B, 2B) and one giant container for metadata, which is in total 256b:
+Above is the format of PHV in our design  ```|64x6B|64x4B|64x2B|256b|```. Basically, we have 3 types of PHV containers of different sizes (i.e., 6B, 4B, 2B) and one giant container for metadata, which is in total 256b:
 
-  * `768b`:  the packet header value container. It contains 8x 6B, 4B and 2B to store values that will be used in the match-action stage.
+  * `6144b`:  the packet header value container. It contains 8x 6B, 4B and 2B to store values that will be used in the match-action stage.
   * `256b`:  the metadata attached to the packet. The lower 128b, namely `[127:0]`, is for the NetFPGA's `tuser` so that it follows the specifications (e.g., SRC, DST ports, etc.) of NetFPGA. The 128th bit is termed as drop mark, where 1 means dropping.
 
 > * `[127:0]` is for the NetFPGA's `tuser` data.
@@ -61,13 +61,13 @@ The format of this instruction is shown below:
 
 ![key_extract](./imgs/key_extractor.png)
 
-Basically, we have allocated `2` containers for each type and appended an comparator to support `if` statement in the p4 action.
+Basically, we have allocated `32` containers for each type and appended an comparator to support `if` statement in the p4 action.
 
-- index is a `3b` width digit to indicate which container of each type is used to construct the key.
+- index is a `6b` width digit to indicate which container of each type is used to construct the key.
 - comparison opcode is a `2b` width digit, where `00` --> `>`, `01` --> `>=`, `11` --> `==`.
-- operand is a `9b` width digit, where the bit `operand[8]` indicates whether it is a immediate operand, if so, the next 8 bits respresents the value. Otherwise, the `operand[7:5]` is the index and `operand[4:3]` is the type of PHV container.
+- operand is a `9b` width digit, where the bit `operand[8]` indicates whether it is a immediate operand, if so, the next 8 bits respresents the value. Otherwise, the `operand[7:5]` is the index and `operand[4:3]` is the type of PHV container. (XG: 这里我感觉是不需要改，其实之前没有用到过，但不是很确定）
 
-Thus, we can get a key of (2*(6+4+2)B+1=)193b, where and the last bit is the result of comparator.
+Thus, we can get a key of 2*(6+4+2)B+1=3073b, where and the last bit is the result of comparator.
 
 Together with a `key mask` obtained from RAM using `VLAN ID`, the key is fed to the next module.
 
@@ -80,11 +80,11 @@ Together with a `key mask` obtained from RAM using `VLAN ID`, the key is fed to 
 
   * Format of the lookup table entry
   
-    each entry is 205b, where the first 12b is the `VLAN ID` and next 193b is the key from `key extractor`.
+    each entry is 12+3073=3085b, where the first 12b is the `VLAN ID` and next 3073b is the key from `key extractor`.
   
   * VLIW-style action table entry
   
-    each entry contains 25x25b (625b in total) sub-actions, indicating how the PHV is going to be modified in the `action engine`.
+    each entry contains 64x193b (12352b in total) sub-actions, indicating how the PHV is going to be modified in the `action engine`.
 
 For the match part, we directly use the [Xilinx CAM](https://www.xilinx.com/support/documentation/application_notes/xapp1151_Param_CAM.pdf) to implement exact matching.
 
@@ -92,7 +92,7 @@ For the match part, we directly use the [Xilinx CAM](https://www.xilinx.com/supp
 
   #### Action Engine
 
-`action engine` takes the `action` output from `lookup engine`, and modifies PHV according to it. The actions that will be supported in the demo include `add`, `addi`, `sub`, `subi`, `load`, `loadd`, `store`, `redirect port`, `discard`.
+`action engine` takes the `action` output from `lookup engine`, and modifies PHV according to it. The actions that will be supported in the demo include `add`, `addi`, `sub`, `subi`, `load`, `loadd`, `store`, `redirect port`, `discard`. (XG: 这里可不可以每一个stage多设计几个stateful ALU，一共设计12个stage)
 
   ![action](./imgs/action.png)
 
@@ -107,26 +107,26 @@ For the match part, we directly use the [Xilinx CAM](https://www.xilinx.com/supp
   9. `discard`: drop the current packet.
   10. `set`: set the value of PHV container to a immediate value.
 
-  There are three types of actions: 2-operand action, 1-operand action and metadata action as is shown below.
+  There are three types of actions: 2-operand action, 1-operand action and metadata action as is shown below. (XG: 有可能stateful alu需要多个operand, 不过这个我可以晚点来设计)
 
   * Action format:
   
-    For `add` (`4b'0001`), `load`(`4b'1011`), `loadd`(`4b0111'`) and `store`(`4b'1000`) and `sub` (`4b'0010`) operations, the action format is:
+    For `add` (`8b'00000001`), `load`(`8b'00001011`), `loadd`(`8b00000111'`) and `store`(`8b'00001000`) and `sub` (`8b'00000010`) operations, the action format is:
   
     ![2_action](./imgs/2_action.png)
   
-    For `addi`(`4b'1001`), `subi`(`4b'1010`), `set`(`4b'1110`), the action format is:
+    For `addi`(`8b'00001001`), `subi`(`8b'00001010`), `set`(`8b'00001110`), the action format is:
   
     ![1_action](./imgs/1_action.png)
   
-    For `port`(`4b'1100`) and `discard`(`4b'1101`), the action format is:
+    For `port`(`8b'00001100`) and `discard`(`8b'00001101`), the action format is:
   
     ![md_action](./imgs/md_action.png)
 
     The default action field is `0x3f`, which can be seen if no action is matched.
 
 
-In order to support VLIW (very long instruction word) in the action engine, there are 24 standard ALUs hard-wired with 24 containers in the PHV, and also 1 extra ALU to modify the metadata field in the PHV. A workflow of the action engine can be shown in the figure below:
+In order to support VLIW (very long instruction word) in the action engine, there are 192 standard ALUs hard-wired with 192 containers in the PHV, and also 1 extra ALU to modify the metadata field in the PHV. A workflow of the action engine can be shown in the figure below:
 
 
   ![action_engine](./imgs/action_engine.png)
@@ -176,13 +176,13 @@ Each module will check whether it is the target of the packet: if so, the module
 
   There are several types of tables that need to be maintained using control plane.
 
-  1. **Parsing Table**: This is a ***160x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
-  2. **Extracting Table**: This is a ***38x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
-  3. **Mask Table**: This is a ***193x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
-  4. **Lookup Table** (TCAM): This is a ***205x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**.
-  5. **Action Table**: This is a ***625x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
-    6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**.
-    7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**.
+  1. **Parsing Table**: This is a ***2500x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
+  2. **Extracting Table**: This is a ***596x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
+  3. **Mask Table**: This is a ***3073x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
+  4. **Lookup Table** (TCAM): This is a ***205x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**. (XG:这里我暂时不知道数字应该怎么改)
+  5. **Action Table**: This is a ***12352x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
+    6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
+    7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
 
   #### Data Structures
 
