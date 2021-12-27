@@ -114,6 +114,7 @@ For the match part, we directly use the [Xilinx CAM](https://www.xilinx.com/supp
     For `add` (`8b'00000001`), `load`(`8b'00001011`), `loadd`(`8b00000111'`) and `store`(`8b'00001000`) and `sub` (`8b'00000010`) operations, the action format is:
   
     ![2_action](./imgs/2_action.png)
+    The first 2 bits of operand represent its type (6B, 4B or 2B) while the remaining 6 bits represent the container index.
   
     For `addi`(`8b'00001001`), `subi`(`8b'00001010`), `set`(`8b'00001110`), the action format is:
   
