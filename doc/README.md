@@ -177,11 +177,11 @@ Each module will check whether it is the target of the packet: if so, the module
 
   There are several types of tables that need to be maintained using control plane.
 
-  1. **Parsing Table**: This is a ***24*64x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
-  2. **Extracting Table**: This is a ***(6*64 + 20)x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
-  3. **Mask Table**: This is a ***(64 * 4 * 8 + 1)x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
-  4. **Lookup Table** (TCAM): This is a ***(12 + 64 * 4 * 8 + 1)x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**. (XG:这里我暂时不知道数字应该怎么改)
-  5. **Action Table**: This is a ***(64 * 65)x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
+  1. **Parsing Table**: This is a ***24x64x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
+  2. **Extracting Table**: This is a ***(6x64 + 20)x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
+  3. **Mask Table**: This is a ***(64 x 4 x 8 + 1)x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
+  4. **Lookup Table** (TCAM): This is a ***(12 + 64 x 4 x 8 + 1)x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**. (XG:这里我暂时不知道数字应该怎么改)
+  5. **Action Table**: This is a ***(64 x 65)x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
   6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
   7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
 
