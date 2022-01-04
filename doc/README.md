@@ -24,12 +24,12 @@ We have a simple indicator to check whether the packet is a `module configuraton
 
 #### Parse Action
 
-one parse action is a 25-bit configuration, each user (i.e., identified by VLAN ID) has 100 such parse actions.
+one parse action is a 24-bit configuration, each user (i.e., identified by VLAN ID) has 64 such parse actions.
 
 * `[23:18]` reserved
 * `[17:9]`  byte number from 0 --> 2^9=512B
-* `[8:7]` container type number, `01` for 2B, `10` for 4B, `11` for 6B
-* `[6:1]` container index
+* `[8:7]` previous container type number, not it is no longer needed (can be replaced by reserved for simplicity)
+* `[6:1]` container index --> 2^6 = 64 containers
 * `[0]` validity bit
 
 ---
@@ -41,9 +41,9 @@ After parsing, the pipeline works on the PHV generated. In our design, the PHV c
   ![phv](./imgs/phv.png)
 
 
-Above is the format of PHV in our design  ```|64x6B|64x4B|64x2B|256b|```. Basically, we have 3 types of PHV containers of different sizes (i.e., 6B, 4B, 2B) and one giant container for metadata, which is in total 256b:
+Above is the format of PHV in our design  ```|64x4B|256b|```. Basically, we have 1 type (4B) of PHV containers and one giant container for metadata, which is in total 256b:
 
-  * `6144b`:  the packet header value container. It contains 64x 6B, 4B and 2B to store values that will be used in the match-action stage.
+  * `2048b = 64 * 4B`:  the packet header value container. It contains 64 x 4B to store values that will be used in the match-action stage.
   * `256b`:  the metadata attached to the packet. The lower 128b, namely `[127:0]`, is for the NetFPGA's `tuser` so that it follows the specifications (e.g., SRC, DST ports, etc.) of NetFPGA. The 128th bit is termed as drop mark, where 1 means dropping.
 
 > * `[127:0]` is for the NetFPGA's `tuser` data.
@@ -177,11 +177,11 @@ Each module will check whether it is the target of the packet: if so, the module
 
   There are several types of tables that need to be maintained using control plane.
 
-  1. **Parsing Table**: This is a ***2500x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
+  1. **Parsing Table**: This is a ***1536x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
   2. **Extracting Table**: This is a ***596x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
   3. **Mask Table**: This is a ***3073x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
   4. **Lookup Table** (TCAM): This is a ***205x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**. (XG:这里我暂时不知道数字应该怎么改)
-  5. **Action Table**: This is a ***12352x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
+  5. **Action Table**: This is a ***4160x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
   6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
   7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
 
