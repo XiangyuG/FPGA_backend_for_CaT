@@ -71,6 +71,10 @@ Thus, we can get a key of 64*(4)B+1=2049b, where and the last bit is the result 
 
 Together with a `key mask` obtained from RAM using `VLAN ID`, the key is fed to the next module.
 
+
+
+![](./imgs/key_extractor.jpg)
+
 ---
 
   #### Lookup Engine
