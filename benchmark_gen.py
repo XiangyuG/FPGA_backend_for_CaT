@@ -1,16 +1,17 @@
 import sys
+import random
 
 table_list = ["ingress_port_mapping", "ingress_port_properties", "validate_outer_ethernet", "validate_outer_ipv4_packet", "validate_outer_ipv6_packet",
         "validate_mpls_packet", "switch_config_params", "port_vlan_mapping", "spanning_tree", "ingress_qos_map_dscp", "ingress_qos_map_pcp",
         "ipsg", "ipsg_permit_special", "int_terminate", "int_sink_update_outer", "int_source", "sflow_ing_take_sample", "sflow_ingress",
         "adjust_lkp_fields", "outer_rmac", "tunnel", "tunnel_lookup_miss_0", "fabric_ingress_dst_lkp", "fabric_ingress_src_lkp", "native_packet_over_fabric",
         "ipv4_dest_vtep", "ipv4_src_vtep", "ipv6_dest_vtep", "ipv6_src_vtep", "mpls_0", "outer_ipv4_multicast", "outer_ipv4_multicast_star_g",
-        "outer_ipv6_multicast", "outer_ipv6_multicast_star_g", "storm_control", "ingress_l4_dst_port", "ingress_l4_src_port", "dmac", "smac", "mac_acl",
-        "ip_acl", "ip_acl", "ipv4_racl", "ipv4_urpf", "ipv4_urpf_lpm", "ipv4_fib", "ipv4_fib_lpm", "ipv6_racl", "ipv6_fib",
+        "outer_ipv6_multicast", "outer_ipv6_multicast_star_g", "storm_control", "validate_packet", "ingress_l4_dst_port", "ingress_l4_src_port", "dmac", "smac", "mac_acl",
+        "ip_acl", "ip_acl", "ipv4_racl", "ipv4_urpf", "ipv4_urpf_lpm", "ipv4_fib", "ipv4_fib_lpm", "ipv6_racl", "ipv6_urpf", "ipv6_urpf_lpm", "ipv6_fib",
         "ipv6_fib_lpm", "urpf_bd", "ipv4_multicast_bridge", "ipv4_multicast_bridge_star_g", "ipv4_multicast_route", "ipv4_multicast_route_star_g",
         "ipv6_multicast_bridge", "ipv6_multicast_bridge_star_g", "ipv6_multicast_route", "ipv6_multicast_route_star_g", "nat_dst", "nat_flow",
         "nat_src", "nat_twice", "meter_index_0", "compute_ipv4_hashes", "compute_ipv6_hashes", "compute_non_ip_hashes", "compute_other_hashes",
-        "meter_action", "ingress_bd_stats_0", "acl_stats_0", "fwd_result", "ecmp_group", "nexthop", "bd_flood", "lag_group", "fabric_lag", "traffic_class",
+        "meter_action", "ingress_bd_stats_0", "acl_stats_0", "fwd_result", "ecmp_group", "nexthop", "bd_flood", "lag_group", "learn_notify", "fabric_lag", "traffic_class",
         "drop_stats_0", "system_acl", "storm_control_stats_0"]
 table_def = {}
 
@@ -2703,13 +2704,14 @@ def main(argv):
     #Note14: nat_dst & nat_flow & nat_src & nat_twice are disjoint
     #Note15: compute_ipv4_hashes & compute_ipv6_hashes & compute_non_ip_hashes are disjoint
     #Note16: ecmp_group & nexthop are disjoint
-    # print("len(table_list) =", len(table_list))
-    # print("len(table_def) =", len(table_def))
-    list_t = ["ingress_port_mapping", "port_vlan_mapping", "ipsg", "native_packet_over_fabric", "mpls_0", "dmac", "ip_acl","ipv4_racl","fwd_result","ecmp_group","lag_group","fabric_lag"]
-    out_str = ""
-    for t in list_t:
-        #out_str += table_def[t]
-        out_str += "apply(" + t + ");\n"
-    print(out_str)
+    if len(argv) != 2:
+        print("Usage: python3:", argv[0], "<number of tables you want>")
+        sys.exit(1)
+    num_of_selected = int(argv[1])
+    total_table = len(table_list)
+    random_list = random.sample(range(0, total_table), num_of_selected)
+    random_list.sort()
+    print(random_list)
+
 if __name__ == "__main__":
     main(sys.argv)
