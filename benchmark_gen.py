@@ -133,8 +133,6 @@ validate_outer_ethernet_content = '''
         key = {
             hdr.ethernet.srcAddr      : ternary;
             hdr.ethernet.dstAddr      : ternary;
-            hdr.vlan_tag_[0].isValid(): exact;
-            hdr.vlan_tag_[1].isValid(): exact;
         }
         size = 512;
     }'''
@@ -211,13 +209,10 @@ validate_mpls_packet_content = '''
         key = {
             hdr.mpls[0].label    : ternary;
             hdr.mpls[0].bos      : ternary;
-            hdr.mpls[0].isValid(): exact;
             hdr.mpls[1].label    : ternary;
             hdr.mpls[1].bos      : ternary;
-            hdr.mpls[1].isValid(): exact;
             hdr.mpls[2].label    : ternary;
             hdr.mpls[2].bos      : ternary;
-            hdr.mpls[2].isValid(): exact;
         }
         size = 512;
     }'''
@@ -278,13 +273,10 @@ port_vlan_mapping_content = '''
         }
         key = {
             meta.ingress_metadata.ifindex: exact;
-            hdr.vlan_tag_[0].isValid()   : exact;
             hdr.vlan_tag_[0].vid         : exact;
-            hdr.vlan_tag_[1].isValid()   : exact;
             hdr.vlan_tag_[1].vid         : exact;
         }
         size = 4096;
-        @name(".bd_action_profile") implementation = action_profile(32w1024);
     }'''
 table_def["port_vlan_mapping"] = port_vlan_mapping_content
 
@@ -397,7 +389,6 @@ table_def["ipsg_permit_special"] = ipsg_permit_special_content
 int_sink_update_outer_content = '''
     action int_sink_update_vxlan_gpe_v4() {
         hdr.vxlan_gpe.next_proto = hdr.vxlan_gpe_int_header.next_proto;
-        hdr.vxlan_gpe_int_header.setInvalid();
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - meta.int_metadata.insert_byte_cnt;
         hdr.udp.length_ = hdr.udp.length_ - meta.int_metadata.insert_byte_cnt;
     }
@@ -409,8 +400,6 @@ int_sink_update_outer_content = '''
             nop;
         }
         key = {
-            hdr.vxlan_gpe_int_header.isValid(): exact;
-            hdr.ipv4.isValid()                : exact;
             meta.int_metadata_i2e.sink        : exact;
         }
         size = 2;
@@ -431,11 +420,8 @@ int_source_content = '''
             int_set_no_src;
         }
         key = {
-            hdr.int_header.isValid()      : exact;
-            hdr.ipv4.isValid()            : exact;
             meta.ipv4_metadata.lkp_ipv4_da: ternary;
             meta.ipv4_metadata.lkp_ipv4_sa: ternary;
-            hdr.inner_ipv4.isValid()      : exact;
             hdr.inner_ipv4.dstAddr        : ternary;
             hdr.inner_ipv4.srcAddr        : ternary;
         }
@@ -462,11 +448,7 @@ int_terminate_content = '''
             int_no_sink;
         }
         key = {
-            hdr.int_header.isValid()          : exact;
-            hdr.vxlan_gpe_int_header.isValid(): exact;
-            hdr.ipv4.isValid()                : exact;
             meta.ipv4_metadata.lkp_ipv4_da    : ternary;
-            hdr.inner_ipv4.isValid()          : exact;
             hdr.inner_ipv4.dstAddr            : ternary;
         }
         size = 256;
@@ -506,7 +488,6 @@ sflow_ingress_content = '''
             meta.ingress_metadata.ifindex : ternary;
             meta.ipv4_metadata.lkp_ipv4_sa: ternary;
             meta.ipv4_metadata.lkp_ipv4_da: ternary;
-            hdr.sflow.isValid()           : exact;
         }
         size = 512;
     }'''
@@ -545,8 +526,6 @@ adjust_lkp_fields_content = '''
             ipv6_lkp;
         }
         key = {
-            hdr.ipv4.isValid(): exact;
-            hdr.ipv6.isValid(): exact;
         }
     }'''
 table_def["adjust_lkp_fields"] = adjust_lkp_fields_content
@@ -655,8 +634,6 @@ tunnel_content = '''
         key = {
             meta.tunnel_metadata.tunnel_vni         : exact;
             meta.tunnel_metadata.ingress_tunnel_type: exact;
-            hdr.inner_ipv4.isValid()                : exact;
-            hdr.inner_ipv6.isValid()                : exact;
         }
         size = 1024;
     }'''
@@ -695,8 +672,6 @@ tunnel_lookup_miss_0_content = '''
             ipv6_lkp;
         }
         key = {
-            hdr.ipv4.isValid(): exact;
-            hdr.ipv6.isValid(): exact;
         }
     }'''
 
@@ -710,9 +685,6 @@ fabric_ingress_dst_lkp_content = '''
         meta.egress_metadata.bypass = hdr.fabric_header_cpu.txBypass;
         meta.intrinsic_metadata.mcast_grp = hdr.fabric_header_cpu.mcast_grp;
         hdr.ethernet.etherType = hdr.fabric_payload_header.etherType;
-        hdr.fabric_header.setInvalid();
-        hdr.fabric_header_cpu.setInvalid();
-        hdr.fabric_payload_header.setInvalid();
     }
     action switch_fabric_unicast_packet() {
         meta.fabric_metadata.fabric_header_present = 1w1;
@@ -727,9 +699,6 @@ fabric_ingress_dst_lkp_content = '''
         meta.l3_metadata.routed = hdr.fabric_header_unicast.routed;
         meta.l3_metadata.outer_routed = hdr.fabric_header_unicast.outerRouted;
         hdr.ethernet.etherType = hdr.fabric_payload_header.etherType;
-        hdr.fabric_header.setInvalid();
-        hdr.fabric_header_unicast.setInvalid();
-        hdr.fabric_payload_header.setInvalid();
     }
     action switch_fabric_multicast_packet() {
         meta.fabric_metadata.fabric_header_present = 1w1;
@@ -743,9 +712,6 @@ fabric_ingress_dst_lkp_content = '''
         meta.l3_metadata.outer_routed = hdr.fabric_header_multicast.outerRouted;
         meta.intrinsic_metadata.mcast_grp = hdr.fabric_header_multicast.mcastGrp;
         hdr.ethernet.etherType = hdr.fabric_payload_header.etherType;
-        hdr.fabric_header.setInvalid();
-        hdr.fabric_header_multicast.setInvalid();
-        hdr.fabric_payload_header.setInvalid();
     }
     table fabric_ingress_dst_lkp {
         actions = {
@@ -810,8 +776,6 @@ native_packet_over_fabric_content = '''
             ipv6_over_fabric;
         }
         key = {
-            hdr.ipv4.isValid(): exact;
-            hdr.ipv6.isValid(): exact;
         }
         size = 1024;
     }'''
@@ -964,8 +928,6 @@ mpls_0_content = '''
         }
         key = {
             meta.tunnel_metadata.mpls_label: exact;
-            hdr.inner_ipv4.isValid()       : exact;
-            hdr.inner_ipv6.isValid()       : exact;
         }
         size = 1024;
     }'''
