@@ -333,7 +333,6 @@ ingress_qos_map_pcp_content = '''
     }
     table ingress_qos_map_pcp {
         actions = {
-            
             set_ingress_tc;
             set_ingress_color;
             set_ingress_tc_and_color;
@@ -949,7 +948,6 @@ outer_ipv4_multicast_star_g_content = '''
     }
     table outer_ipv4_multicast_star_g {
         actions = {
-            
             outer_multicast_route_sm_star_g_hit;
             outer_multicast_route_bidir_star_g_hit;
             outer_multicast_bridge_star_g_hit;
@@ -1072,7 +1070,6 @@ validate_packet_content = '''
     }
     table validate_packet {
         actions = {
-            
             set_unicast;
             set_unicast_and_ipv6_src_is_link_local;
             set_multicast;
@@ -1237,7 +1234,6 @@ mac_acl_content = '''
     }
     action acl_mirror(bit<32> session_id, bit<14> acl_stats_index, bit<16> acl_meter_index, bit<2> nat_mode, bit<3> ingress_cos, bit<8> tc, bit<2> color) {
         meta.i2e_metadata.mirror_session_id = (bit<16>)session_id;
-        clone3(CloneType.I2E, (bit<32>)session_id, { meta.i2e_metadata.ingress_tstamp, meta.i2e_metadata.mirror_session_id });
         meta.acl_metadata.acl_stats_index = acl_stats_index;
         meta.meter_metadata.meter_index = acl_meter_index;
         meta.nat_metadata.ingress_nat_mode = nat_mode;
@@ -1311,7 +1307,6 @@ ip_acl_content = '''
     }
     action acl_mirror(bit<32> session_id, bit<14> acl_stats_index, bit<16> acl_meter_index, bit<2> nat_mode, bit<3> ingress_cos, bit<8> tc, bit<2> color) {
         meta.i2e_metadata.mirror_session_id = (bit<16>)session_id;
-        clone3(CloneType.I2E, (bit<32>)session_id, { meta.i2e_metadata.ingress_tstamp, meta.i2e_metadata.mirror_session_id });
         meta.acl_metadata.acl_stats_index = acl_stats_index;
         meta.meter_metadata.meter_index = acl_meter_index;
         meta.nat_metadata.ingress_nat_mode = nat_mode;
@@ -1389,7 +1384,6 @@ ipv6_acl_content = '''
     }
     action acl_mirror(bit<32> session_id, bit<14> acl_stats_index, bit<16> acl_meter_index, bit<2> nat_mode, bit<3> ingress_cos, bit<8> tc, bit<2> color) {
         meta.i2e_metadata.mirror_session_id = (bit<16>)session_id;
-        clone3(CloneType.I2E, (bit<32>)session_id, { meta.i2e_metadata.ingress_tstamp, meta.i2e_metadata.mirror_session_id });
         meta.acl_metadata.acl_stats_index = acl_stats_index;
         meta.meter_metadata.meter_index = acl_meter_index;
         meta.nat_metadata.ingress_nat_mode = nat_mode;
@@ -2450,7 +2444,6 @@ system_acl_content = '''
     action copy_to_cpu(bit<5> qid, bit<32> meter_id, bit<3> icos) {
         meta.intrinsic_metadata.qid = qid;
         meta.intrinsic_metadata.ingress_cos = icos;
-        clone3(CloneType.I2E, (bit<32>)32w250, { meta.ingress_metadata.bd, meta.ingress_metadata.ifindex, meta.fabric_metadata.reason_code, meta.ingress_metadata.ingress_port });
         copp.execute_meter((bit<32>)meter_id, meta.intrinsic_metadata.packet_color);
     }
     action redirect_to_cpu(bit<5> qid, bit<32> meter_id, bit<3> icos) {
@@ -2475,7 +2468,6 @@ system_acl_content = '''
         mark_to_drop();
     }
     action negative_mirror(bit<32> session_id) {
-        clone3(CloneType.I2E, (bit<32>)session_id, { meta.ingress_metadata.ifindex, meta.ingress_metadata.drop_reason });
         mark_to_drop();
     }
     table system_acl {
