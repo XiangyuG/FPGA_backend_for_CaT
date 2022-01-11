@@ -18,7 +18,7 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
     state start {
-        packet.extrat(hdr.pkts);
+        packet.extract(hdr.pkts);
         transition accept;
     }
     
