@@ -229,7 +229,6 @@ switch_config_params_content = '''
         meta.ingress_metadata.ingress_port = standard_metadata.ingress_port;
         meta.l2_metadata.same_if_check = meta.ingress_metadata.ifindex;
         standard_metadata.egress_spec = 9w511;
-        random(meta.ingress_metadata.sflow_take_sample, (bit<32>)0, (bit<32>)32w0x7fffffff);
     }
     table switch_config_params {
         actions = {
