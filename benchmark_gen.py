@@ -2510,6 +2510,57 @@ system_acl_content = '''
     }'''
 table_def["system_acl"] = system_acl_content
 
+def pass_test(out_table_list):
+    # Note1:
+    if "ingress_qos_map_pcp" in out_table_list and "ingress_qos_map_dscp" in out_table_list:
+        return False
+    # Note2:
+    if "int_terminate" in out_table_list and "int_source" in out_table_list:
+        return False
+    # Note3:
+    if "int_sink_update_outer" in out_table_list and "int_source" in out_table_list:
+        return False
+    # Note4:
+    if ("outer_ipv4_multicast" in out_table_list and "outer_ipv6_multicast" in out_table_list) or ("outer_ipv4_multicast" in out_table_list and "outer_ipv6_multicast_star_g" in out_table_list) or ("outer_ipv4_multicast_star_g" in out_table_list and "outer_ipv6_multicast" in out_table_list) or ("outer_ipv4_multicast_star_g" in out_table_list and "outer_ipv6_multicast_star_g" in out_table_list):
+        return False
+    # Note5:
+    if "ip_acl" in out_table_list and "ipv6_acl" in out_table_list:
+        return False
+    # Note6:
+    if "ipv4_urpf" in out_table_list and "ipv4_urpf_lpm" in out_table_list:
+        return False
+    # Note7:
+    if "ipv4_fib" in out_table_list and "ipv4_fib_lpm" in out_table_list:
+        return False
+    # Note8:
+    if "ipv6_urpf" in out_table_list and "ipv6_urpf_lpm" in out_table_list:
+        return False
+    # Note9:
+    if "ipv6_fib" in out_table_list and "ipv6_fib_lpm" in out_table_list:
+        return False
+    # Note10:
+    if "ipv4_multicast_bridge" in out_table_list and "ipv4_multicast_bridge_star_g" in out_table_list:
+        return False
+    # Note11:
+    if "ipv4_multicast_route" in out_table_list and "ipv4_multicast_route_star_g" in out_table_list:
+        return False
+    # Note12:
+    if "ipv6_multicast_bridge" in out_table_list and "ipv6_multicast_bridge_star_g" in out_table_list:
+        return False
+    # Note13:
+    if "ipv6_multicast_route" in out_table_list and "ipv6_multicast_route_star_g" in out_table_list:
+        return False
+    # Note14:
+    if ("nat_dst" in out_table_list and "nat_flow" in out_table_list) or ("nat_dst" in out_table_list and "nat_src" in out_table_list) or ("nat_dst" in out_table_list and "nat_twice" in out_table_list) or ("nat_flow" in out_table_list and "nat_src" in out_table_list) or ("nat_flow" in out_table_list and "nat_twice" in out_table_list) or ("nat_src" in out_table_list and "nat_twice" in out_table_list):
+        return False
+    # Note15:
+    if ("compute_ipv4_hashes" in out_table_list and "compute_ipv6_hashes" in out_table_list) or ("compute_ipv4_hashes" in out_table_list and "compute_non_ip_hashes" in out_table_list) or ("compute_ipv6_hashes" in out_table_list and "compute_non_ip_hashes" in out_table_list):
+        return False
+    # Note16:
+    if "ecmp_group" in out_table_list and "nexthop" in out_table_list:
+        return False
+    return True
+
 def main(argv):
     #Note1: ingress_qos_map_pcp & ingress_qos_map_dscp are disjoint
     #Note2: int_terminate & int_source are disjoint
@@ -2532,9 +2583,18 @@ def main(argv):
         sys.exit(1)
     num_of_selected = int(argv[1])
     total_table = len(table_list)
-    random_list = random.sample(range(0, total_table), num_of_selected)
-    random_list.sort()
-    print(random_list)
+    while 1:
+        random_list = random.sample(range(0, total_table), num_of_selected)
+        out_table_list = []
+        random_list.sort()
+        for i in range(num_of_selected):
+            table_name = table_list[random_list[i]]
+            out_table_list.append(table_name)
+        if pass_test(out_table_list):
+            print(out_table_list)
+            break
+        else:
+            continue
     #Note: ipsg should not be used since it does nothing
 
 if __name__ == "__main__":
