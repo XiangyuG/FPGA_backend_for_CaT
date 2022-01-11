@@ -3,3 +3,4 @@ test2: hdr.pkts.pkt_0 = 5 -> hdr.pkts.pkt_1 = hdr.pkts.pkt1 + 2;
 test3: match dependency
 test4: action dependency 
 test5: atomic action (sampling)
+test6: hdr.pkts.pkt_0 = 5 -> hdr.pkts.pkt_1 = 1; hdr.pkts.pkt_0 = 6 -> hdr.pkts.pkt_1 = 2;
