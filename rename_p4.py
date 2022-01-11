@@ -58,6 +58,7 @@ header packets_t {
 '''
     # add packet fields definition
     out_prog += pkt_def(cnt)
+    out_prog += "}\n"
     out_prog += '''struct headers {
     packets_t  pkts;
 }
