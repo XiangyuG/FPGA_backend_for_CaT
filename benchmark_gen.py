@@ -1096,7 +1096,6 @@ ingress_l4_dst_port_content = '''
     }
     table ingress_l4_dst_port {
         actions = {
-            
             set_ingress_dst_port_range_id;
         }
         key = {
@@ -1316,7 +1315,6 @@ ip_acl_content = '''
     }
     table ip_acl {
         actions = {
-            
             acl_deny;
             acl_permit;
             acl_redirect_nexthop;
@@ -1780,7 +1778,6 @@ ipv4_multicast_route_content = '''
             meta.ipv4_metadata.lkp_ipv4_da: exact;
         }
         size = 1024;
-        @name(".ipv4_multicast_route_s_g_stats") counters = direct_counter(CounterType.packets);
     }'''
 table_def["ipv4_multicast_route"] = ipv4_multicast_route_content
 
@@ -1814,7 +1811,6 @@ ipv4_multicast_route_star_g_content = '''
             meta.ipv4_metadata.lkp_ipv4_da: exact;
         }
         size = 1024;
-        @name(".ipv4_multicast_route_star_g_stats") counters = direct_counter(CounterType.packets);
     }'''
 table_def["ipv4_multicast_route_star_g"] = ipv4_multicast_route_star_g_content
 
@@ -1876,7 +1872,6 @@ ipv6_multicast_route_content = '''
             meta.ipv6_metadata.lkp_ipv6_da: exact;
         }
         size = 1024;
-        @name(".ipv6_multicast_route_s_g_stats") counters = direct_counter(CounterType.packets);
     }'''
 table_def["ipv6_multicast_route"] = ipv6_multicast_route_content
 
@@ -1910,7 +1905,6 @@ ipv6_multicast_route_star_g_content = '''
             meta.ipv6_metadata.lkp_ipv6_da: exact;
         }
         size = 1024;
-        @name(".ipv6_multicast_route_star_g_stats") counters = direct_counter(CounterType.packets);
     }'''
 table_def["ipv6_multicast_route_star_g"] = ipv6_multicast_route_star_g_content
 
@@ -2094,7 +2088,6 @@ compute_other_hashes_content = '''
 table_def["compute_other_hashes"] = compute_other_hashes_content
 
 meter_action_content = '''
-    direct_counter(CounterType.packets) meter_stats;
     action meter_permit() {
     }
     action meter_deny() {
@@ -2117,7 +2110,6 @@ meter_action_content = '''
             meta.meter_metadata.meter_index : exact;
         }
         size = 1024;
-        @name(".meter_stats") counters = direct_counter(CounterType.packets);
     }'''
 table_def["meter_action"] = meter_action_content
 
@@ -2148,7 +2140,6 @@ acl_stats_0_content = '''
 table_def["acl_stats_0"] = acl_stats_0_content
 
 storm_control_stats_0_content = '''
-    direct_counter(CounterType.packets) storm_control_stats;
     action nop_3() {
         storm_control_stats.count();
     }
@@ -2161,7 +2152,6 @@ storm_control_stats_0_content = '''
             standard_metadata.ingress_port  : exact;
         }
         size = 1024;
-        @name(".storm_control_stats") counters = direct_counter(CounterType.packets);
     }'''
 table_def["storm_control_stats_0"] = storm_control_stats_0_content
 
@@ -2281,7 +2271,6 @@ ecmp_group_content = '''
     }
     table ecmp_group {
         actions = {
-            
             set_ecmp_nexthop_details;
             set_ecmp_nexthop_details_for_post_routed_flood;
         }
@@ -2290,7 +2279,6 @@ ecmp_group_content = '''
             meta.hash_metadata.hash1      : selector;
         }
         size = 1024;
-        @name(".ecmp_action_profile") @mode("fair") implementation = action_selector(HashAlgorithm.identity, 32w1024, 32w10);
     }'''
 table_def["ecmp_group"] = ecmp_group_content
 
@@ -2309,7 +2297,6 @@ nexthop_content = '''
     }
     table nexthop {
         actions = {
-            
             set_nexthop_details;
             set_nexthop_details_for_post_routed_flood;
         }
@@ -2559,6 +2546,16 @@ def pass_test(out_table_list):
     # Note16:
     if "ecmp_group" in out_table_list and "nexthop" in out_table_list:
         return False
+    if "ingress_bd_stats_0" in out_table_list:
+        return False
+    if "storm_control_stats_0" in out_table_list:
+        return False
+    if "drop_stats_0" in out_table_list:
+        return False
+    if "acl_stats_0" in out_table_list:
+        return False
+    if "meter_action" in out_table_list:
+        return False
     return True
 
 def main(argv):
@@ -2591,11 +2588,15 @@ def main(argv):
             table_name = table_list[random_list[i]]
             out_table_list.append(table_name)
         if pass_test(out_table_list):
-            print(out_table_list)
             break
         else:
             continue
     #Note: ipsg should not be used since it does nothing
+    out_str = ""
+    for t in out_table_list:
+        out_str += table_def[t]
+    print(out_str)
+
 
 if __name__ == "__main__":
     main(sys.argv)
