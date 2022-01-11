@@ -517,14 +517,11 @@ adjust_lkp_fields_content = '''
 table_def["adjust_lkp_fields"] = adjust_lkp_fields_content
 
 outer_rmac_content = '''
-    action on_miss() {
-    }
     action outer_rmac_hit() {
         meta.l3_metadata.rmac_hit = 1w1;
     }
     table outer_rmac {
         actions = {
-            on_miss;
             outer_rmac_hit;
         }
         key = {
@@ -786,14 +783,11 @@ ipv4_dest_vtep_content = '''
 table_def["ipv4_dest_vtep"] = ipv4_dest_vtep_content
 
 ipv4_src_vtep_content = '''
-    action on_miss() {
-    }
     action src_vtep_hit(bit<16> ifindex) {
         meta.ingress_metadata.ifindex = ifindex;
     }
     table ipv4_src_vtep {
         actions = {
-            on_miss;
             src_vtep_hit;
         }
         key = {
@@ -829,14 +823,11 @@ ipv6_dest_vtep_content = '''
 table_def["ipv6_dest_vtep"] = ipv6_dest_vtep_content
 
 ipv6_src_vtep_content = '''
-    action on_miss() {
-    }
     action src_vtep_hit(bit<16> ifindex) {
         meta.ingress_metadata.ifindex = ifindex;
     }
     table ipv6_src_vtep {
         actions = {
-            on_miss;
             src_vtep_hit;
         }
         key = {
@@ -910,8 +901,6 @@ mpls_0_content = '''
 table_def["mpls_0"] = mpls_0_content
 
 outer_ipv4_multicast_content = '''
-    action on_miss() {
-    }
     action outer_multicast_route_s_g_hit(bit<16> mc_index, bit<16> mcast_rpf_group) {
         meta.intrinsic_metadata.mcast_grp = mc_index;
         meta.multicast_metadata.outer_mcast_route_hit = 1w1;
@@ -925,8 +914,6 @@ outer_ipv4_multicast_content = '''
     }
     table outer_ipv4_multicast {
         actions = {
-            
-            on_miss;
             outer_multicast_route_s_g_hit;
             outer_multicast_bridge_s_g_hit;
         }
@@ -977,8 +964,6 @@ outer_ipv4_multicast_star_g_content = '''
 table_def["outer_ipv4_multicast_star_g"] = outer_ipv4_multicast_star_g_content
 
 outer_ipv6_multicast_content = '''
-    action on_miss() {
-    }
     action outer_multicast_route_s_g_hit(bit<16> mc_index, bit<16> mcast_rpf_group) {
         meta.intrinsic_metadata.mcast_grp = mc_index;
         meta.multicast_metadata.outer_mcast_route_hit = 1w1;
@@ -992,8 +977,6 @@ outer_ipv6_multicast_content = '''
     }
     table outer_ipv6_multicast {
         actions = {
-            
-            on_miss;
             outer_multicast_route_s_g_hit;
             outer_multicast_bridge_s_g_hit;
         }
@@ -1497,8 +1480,6 @@ ipv4_racl_content = '''
 table_def["ipv4_racl"] = ipv4_racl_content
 
 ipv4_urpf_content = '''
-    action on_miss() {
-    }
     action ipv4_urpf_hit(bit<16> urpf_bd_group) {
         meta.l3_metadata.urpf_hit = 1w1;
         meta.l3_metadata.urpf_bd_group = urpf_bd_group;
@@ -1506,7 +1487,6 @@ ipv4_urpf_content = '''
     }
     table ipv4_urpf {
         actions = {
-            on_miss;
             ipv4_urpf_hit;
         }
         key = {
@@ -1540,8 +1520,6 @@ ipv4_urpf_lpm_content = '''
 table_def["ipv4_urpf_lpm"] = ipv4_urpf_lpm_content
 
 ipv4_fib_content = '''
-    action on_miss() {
-    }
     action fib_hit_nexthop(bit<16> nexthop_index) {
         meta.l3_metadata.fib_hit = 1w1;
         meta.l3_metadata.fib_nexthop = nexthop_index;
@@ -1553,7 +1531,6 @@ ipv4_fib_content = '''
         meta.l3_metadata.fib_next
     table ipv4_fib {
         actions = {
-            on_miss;
             fib_hit_nexthop;
             fib_hit_ecmp;
         }
@@ -1567,8 +1544,6 @@ table_def["ipv4_fib"] = ipv4_fib_content
 
 
 ipv4_fib_lpm_content = '''
-    action on_miss() {
-    }
     action fib_hit_nexthop(bit<16> nexthop_index) {
         meta.l3_metadata.fib_hit = 1w1;
         meta.l3_metadata.fib_nexthop = nexthop_index;
@@ -1581,7 +1556,6 @@ ipv4_fib_lpm_content = '''
     }
     table ipv4_fib_lpm {
         actions = {
-            on_miss;
             fib_hit_nexthop;
             fib_hit_ecmp;
         }
@@ -1650,8 +1624,6 @@ ipv6_racl_content = '''
 table_def["ipv6_racl"] = ipv6_racl_content
 
 ipv6_urpf_content = '''
-    action on_miss() {
-    }
     action ipv6_urpf_hit(bit<16> urpf_bd_group) {
         meta.l3_metadata.urpf_hit = 1w1;
         meta.l3_metadata.urpf_bd_group = urpf_bd_group;
@@ -1659,7 +1631,6 @@ ipv6_urpf_content = '''
     }
     table ipv6_urpf {
         actions = {
-            on_miss;
             ipv6_urpf_hit;
         }
         key = {
@@ -1693,21 +1664,18 @@ ipv6_urpf_lpm_content = '''
 table_def["ipv6_urpf_lpm"] = ipv6_urpf_lpm_content
 
 ipv6_fib_content = '''
-    action on_miss() {
-    }
-    @name(".fib_hit_nexthop") action fib_hit_nexthop(bit<16> nexthop_index) {
+    action fib_hit_nexthop(bit<16> nexthop_index) {
         meta.l3_metadata.fib_hit = 1w1;
         meta.l3_metadata.fib_nexthop = nexthop_index;
         meta.l3_metadata.fib_nexthop_type = 2w0;
     }
-    @name(".fib_hit_ecmp") action fib_hit_ecmp(bit<16> ecmp_index) {
+    action fib_hit_ecmp(bit<16> ecmp_index) {
         meta.l3_metadata.fib_hit = 1w1;
         meta.l3_metadata.fib_nexthop = ecmp_index;
         meta.l3_metadata.fib_nexthop_type = 2w1;
     }
-    @name(".ipv6_fib") table ipv6_fib {
+    table ipv6_fib {
         actions = {
-            on_miss;
             fib_hit_nexthop;
             fib_hit_ecmp;
         }
@@ -1720,8 +1688,6 @@ ipv6_fib_content = '''
 table_def["ipv6_fib"] = ipv6_fib_content
 
 ipv6_fib_lpm_content = '''
-    action on_miss() {
-    }
     action fib_hit_nexthop(bit<16> nexthop_index) {
         meta.l3_metadata.fib_hit = 1w1;
         meta.l3_metadata.fib_nexthop = nexthop_index;
@@ -1734,7 +1700,6 @@ ipv6_fib_lpm_content = '''
     }
     table ipv6_fib_lpm {
         actions = {
-            on_miss;
             fib_hit_nexthop;
             fib_hit_ecmp;
         }
@@ -1764,15 +1729,12 @@ urpf_bd_content = '''
 table_def["urpf_bd"] = urpf_bd_content
 
 ipv4_multicast_bridge_content = '''
-    action on_miss() {
-    }
     action multicast_bridge_s_g_hit(bit<16> mc_index) {
         meta.multicast_metadata.multicast_bridge_mc_index = mc_index;
         meta.multicast_metadata.mcast_bridge_hit = 1w1;
     }
     table ipv4_multicast_bridge {
         actions = {
-            on_miss;
             multicast_bridge_s_g_hit;
         }
         key = {
@@ -1863,15 +1825,12 @@ ipv4_multicast_route_star_g_content = '''
 table_def["ipv4_multicast_route_star_g"] = ipv4_multicast_route_star_g_content
 
 ipv6_multicast_bridge_content = '''
-    action on_miss() {
-    }
     action multicast_bridge_s_g_hit(bit<16> mc_index) {
         meta.multicast_metadata.multicast_bridge_mc_index = mc_index;
         meta.multicast_metadata.mcast_bridge_hit = 1w1;
     }
     table ipv6_multicast_bridge {
         actions = {
-            on_miss;
             multicast_bridge_s_g_hit;
         }
         key = {
@@ -1962,8 +1921,6 @@ ipv6_multicast_route_star_g_content = '''
 table_def["ipv6_multicast_route_star_g"] = ipv6_multicast_route_star_g_content
 
 nat_dst_content = '''
-    action on_miss() {
-    }
     action set_dst_nat_nexthop_index(bit<16> nexthop_index, bit<2> nexthop_type, bit<14> nat_rewrite_index) {
         meta.nat_metadata.nat_nexthop = nexthop_index;
         meta.nat_metadata.nat_nexthop_type = nexthop_type;
@@ -1972,7 +1929,6 @@ nat_dst_content = '''
     }
     table nat_dst {
         actions = {
-            on_miss;
             set_dst_nat_nexthop_index;
         }
         key = {
@@ -2021,14 +1977,11 @@ nat_flow_content = '''
 table_def["nat_flow"] = nat_flow_content
 
 nat_src_content = '''
-    action on_miss() {
-    }
     action set_src_nat_rewrite_index(bit<14> nat_rewrite_index) {
         meta.nat_metadata.nat_rewrite_index = nat_rewrite_index;
     }
     table nat_src {
         actions = {
-            on_miss;
             set_src_nat_rewrite_index;
         }
         key = {
@@ -2042,8 +1995,6 @@ nat_src_content = '''
 table_def["nat_src"] = nat_src_content
 
 nat_twice_content = '''
-    action on_miss() {
-    }
     action set_twice_nat_nexthop_index(bit<16> nexthop_index, bit<2> nexthop_type, bit<14> nat_rewrite_index) {
         meta.nat_metadata.nat_nexthop = nexthop_index;
         meta.nat_metadata.nat_nexthop_type = nexthop_type;
@@ -2052,7 +2003,6 @@ nat_twice_content = '''
     }
     table nat_twice {
         actions = {
-            on_miss;
             set_twice_nat_nexthop_index;
         }
         key = {
@@ -2593,6 +2543,7 @@ def main(argv):
     random_list = random.sample(range(0, total_table), num_of_selected)
     random_list.sort()
     print(random_list)
+    #Note: ipsg should not be used since it does nothing
 
 if __name__ == "__main__":
     main(sys.argv)
