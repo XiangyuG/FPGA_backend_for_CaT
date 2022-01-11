@@ -423,13 +423,10 @@ int_source_content = '''
 table_def["int_source"] = int_source_content
 
 int_terminate_content = '''
-    action int_sink(bit<32> mirror_id) {
-        meta.int_metadata_i2e.sink = 1w1;
-        meta.i2e_metadata.mirror_session_id = (bit<16>)mirror_id;
-    }
     action int_sink_gpe(bit<32> mirror_id) {
         meta.int_metadata.insert_byte_cnt = meta.int_metadata.gpe_int_hdr_len << 2;
-        int_sink(mirror_id);
+        meta.int_metadata_i2e.sink = 1w1;
+        meta.i2e_metadata.mirror_session_id = (bit<16>)mirror_id;
     }
     action int_no_sink() {
         meta.int_metadata_i2e.sink = 1w0;
@@ -454,7 +451,6 @@ sflow_ing_take_sample_content = '''
     }
     table sflow_ing_take_sample {
         actions = {
-            
             sflow_ing_pkt_to_cpu;
         }
         key = {
