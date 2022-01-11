@@ -55,7 +55,7 @@ control ingress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
-        action set_ifindex(bit<16> ifindex, bit<2> port_type) {
+        action set_ifindex(bit<32> ifindex, bit<32> port_type) {
                hdr.pkts.pkt_0 = ifindex;
                hdr.pkts.pkt_1 = port_type;
         }
@@ -68,7 +68,7 @@ control ingress(inout headers hdr,
               }
               size = 288;
         }
-    action src_vtep_hit(bit<16> ifindex) {
+    action src_vtep_hit(bit<32> ifindex) {
         hdr.pkts.pkt_0 = ifindex;
     }
     table ipv4_src_vtep {
@@ -83,27 +83,27 @@ control ingress(inout headers hdr,
         size = 1024;
     }
     action set_unicast() {
-        hdr.pkts.pkt_6 = 3w1;
+        hdr.pkts.pkt_6 = 1;
     }
     action set_unicast_and_ipv6_src_is_link_local() {
-        hdr.pkts.pkt_6 = 3w1;
-        hdr.pkts.pkt_7 = 1w1;
+        hdr.pkts.pkt_6 = 1;
+        hdr.pkts.pkt_7 = 1;
     }
     action set_multicast() {
-        hdr.pkts.pkt_6 = 3w2;
-        hdr.pkts.pkt_8 = hdr.pkts.pkt_8 + 16w1;
+        hdr.pkts.pkt_6 = 2;
+        hdr.pkts.pkt_8 = hdr.pkts.pkt_8 + 1;
     }
     action set_multicast_and_ipv6_src_is_link_local() {
-        hdr.pkts.pkt_6 = 3w2;
-        hdr.pkts.pkt_7 = 1w1;
-        hdr.pkts.pkt_8 = hdr.pkts.pkt_8 + 16w1;
+        hdr.pkts.pkt_6 = 2;
+        hdr.pkts.pkt_7 = 1;
+        hdr.pkts.pkt_8 = hdr.pkts.pkt_8 + 1;
     }
     action set_broadcast() {
-        hdr.pkts.pkt_6 = 3w4;
-        hdr.pkts.pkt_8 = hdr.pkts.pkt_8 + 16w2;
+        hdr.pkts.pkt_6 = 4;
+        hdr.pkts.pkt_8 = hdr.pkts.pkt_8 + 2;
     }
-    action set_malformed_packet(bit<8> drop_reason) {
-        hdr.pkts.pkt_9 = 1w1;
+    action set_malformed_packet(bit<32> drop_reason) {
+        hdr.pkts.pkt_9 = 1;
         hdr.pkts.pkt_10 = drop_reason;
     }
     table validate_packet {
@@ -121,20 +121,20 @@ control ingress(inout headers hdr,
             hdr.pkts.pkt_13           : ternary;
             hdr.pkts.pkt_14            : ternary;
             hdr.pkts.pkt_15        : ternary;
-            hdr.pkts.pkt_16 :24]  : ternary;
-            hdr.pkts.pkt_17 :112]: ternary;
+            hdr.pkts.pkt_16  : ternary;
+            hdr.pkts.pkt_17  : ternary;
         }
         size = 512;
     }
-    action fib_hit_nexthop(bit<16> nexthop_index) {
-        hdr.pkts.pkt_18 = 1w1;
+    action fib_hit_nexthop(bit<32> nexthop_index) {
+        hdr.pkts.pkt_18 = 1;
         hdr.pkts.pkt_19 = nexthop_index;
-        hdr.pkts.pkt_20 = 2w0;
+        hdr.pkts.pkt_20 = 0;
     }
-    action fib_hit_ecmp(bit<16> ecmp_index) {
-        hdr.pkts.pkt_18 = 1w1;
+    action fib_hit_ecmp(bit<32> ecmp_index) {
+        hdr.pkts.pkt_18 = 1;
         hdr.pkts.pkt_19 = ecmp_index;
-        hdr.pkts.pkt_20 = 2w1;
+        hdr.pkts.pkt_20 = 1;
     }
     table ipv6_fib {
         actions = {
@@ -147,9 +147,9 @@ control ingress(inout headers hdr,
         }
         size = 1024;
     }
-    action multicast_bridge_s_g_hit(bit<16> mc_index) {
+    action multicast_bridge_s_g_hit(bit<32> mc_index) {
         hdr.pkts.pkt_22 = mc_index;
-        hdr.pkts.pkt_23 = 1w1;
+        hdr.pkts.pkt_23 = 1;
     }
     table ipv6_multicast_bridge {
         actions = {
