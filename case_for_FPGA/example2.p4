@@ -190,7 +190,7 @@ control ingress(inout headers hdr,
     action ipv4_urpf_hit(bit<32> urpf_bd_group) {
         hdr.pkts.pkt_29 = 1;
         hdr.pkts.pkt_30 = urpf_bd_group;
-        hdr.pkts.pkt_31 = hdr.pkts.pkt_32
+        hdr.pkts.pkt_31 = hdr.pkts.pkt_32;
     }
     table ipv4_urpf {
         actions = {
@@ -205,7 +205,7 @@ control ingress(inout headers hdr,
     action ipv6_urpf_hit(bit<32> urpf_bd_group) {
         hdr.pkts.pkt_29 = 1;
         hdr.pkts.pkt_30 = urpf_bd_group;
-        hdr.pkts.pkt_31 = hdr.pkts.pkt_33
+        hdr.pkts.pkt_31 = hdr.pkts.pkt_33;
     }
     action urpf_miss() {
         hdr.pkts.pkt_34 = 1;
