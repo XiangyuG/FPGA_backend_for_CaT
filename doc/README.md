@@ -27,8 +27,8 @@ We have a simple indicator to check whether the packet is a `module configuraton
 one parse action is a 24-bit configuration, each user (i.e., identified by VLAN ID) has 64 such parse actions.
 
 * `[23:18]` reserved
-* `[17:9]`  byte number from 0 --> 2^9=512B
-* `[8:7]` previous container type number, not it is no longer needed (can be replaced by reserved for simplicity)
+* `[17:9]` byte number from 0 --> 2^9=512B
+* `[8:7]` container type number, for compatibility reason, it is still used, `01-->2B, 10-->4B, 11-->6B`
 * `[6:1]` container index --> 2^6 = 64 containers
 * `[0]` validity bit
 
@@ -61,19 +61,15 @@ The format of this instruction is shown below:
 
 ![key_extract](./imgs/key_extractor.png)
 
-Basically, we have allocated `64` containers and appended an comparator to support `if` statement in the p4 action.
+Basically, we have allocated `8` containers and appended an comparator to support `if` statement in the p4 action.
 
 - index is a `6b` width digit to indicate which container of each type is used to construct the key.
 - comparison opcode is a `2b` width digit, where `00` --> `>`, `01` --> `>=`, `11` --> `==`.
-- operand is a `9b` width digit, where the bit `operand[8]` indicates whether it is a immediate operand, if so, the next 8 bits respresents the value. Otherwise, the `operand[7:5]` is the index and `operand[4:3]` is the type of PHV container. (XG: 这里我感觉是不需要改，其实之前没有用到过，但不是很确定）
+- [Currently, the last 20 bits are not used in the simulation.] operand is a `9b` width digit, where the bit `operand[8]` indicates whether it is a immediate operand, if so, the next 8 bits respresents the value. Otherwise, the `operand[7:5]` is the index and `operand[4:3]` is the type of PHV container.
 
-Thus, we can get a key of 64*(4)B+1=2049b, where and the last bit is the result of comparator.
+Thus, we can get a key of 64*4B+1=2049b, where and the last bit is the result of comparator, which is always set to 0.
 
 Together with a `key mask` obtained from RAM using `VLAN ID`, the key is fed to the next module.
-
-
-
-![](./imgs/key_extractor.jpg)
 
 ---
 
@@ -93,6 +89,18 @@ Together with a `key mask` obtained from RAM using `VLAN ID`, the key is fed to 
 For the match part, we directly use the [Xilinx CAM](https://www.xilinx.com/support/documentation/application_notes/xapp1151_Param_CAM.pdf) to implement exact matching.
 
 ---
+
+#### Multi match
+
+![](./imgs/multi-match.png)
+
+Basically, we now have 8 key extractors and 8 corresponding lookup engines (i.e., the CAM in our current implementation) in order to support `wider` and `deeper` matching.
+
+For exmaple, for `wider` case, we can use multiple key extractor w/ CAM. The compiler should ensure the matching result is identical for all the corresponding CAMs. For `deeper` case, just insert different entries to differnt CAMs.
+
+The result (i.e., which CAM and which index) is passed to a indirection table (i.e., a RAM in our implementation) to get the real index of the action RAM.
+
+------
 
   #### Action Engine
 
@@ -182,9 +190,10 @@ Each module will check whether it is the target of the packet: if so, the module
   There are several types of tables that need to be maintained using control plane.
 
   1. **Parsing Table**: This is a ***24x64x16 RAM*** that stores the info about how to extract containers out of the first 1024b of the packet. This table is duplicated in both **Parser** and **Deparser**.
-  2. **Extracting Table**: This is a ***(6x64 + 20)x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
-  3. **Mask Table**: This is a ***(64 x 4 x 8 + 1)x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
-  4. **Lookup Table** (TCAM): This is a ***(12 + 64 x 4 x 8 + 1)x16 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**.
+  2. **Extracting Table**: This is a ***(6x8 + 20)x16 RAM*** that indicates how the keys are generated from PHV. This table is in **Key Extractor**. Be noted that each entry of the table should be used concurrently with a mask entry, indicating which bit should be masked (ignored).
+  3. **Mask Table**: This is a ***(8x32 + 1)x16 RAM*** that masks certain bits in the key field. It is also in **Key Extractor**. 
+  4. **Lookup Table** (TCAM): This is a ***(12 + 8x32 + 1)x256 TCAM*** that serves as the lookup engine in the RMT pipeline. It is in **Lookup Engine**.
+  4. **Indirection Table**: A ***8x2048 RAM*** that stores indirection info.
   5. **Action Table**: This is a ***(64 x 65)x16 RAM*** that stores VLIW instruction sets. It is also in **Lookup Engine**.
   6. **Segment Table**: This is a **16x16 RAM** that get the allocated range of stateful memory of each user. It is in the **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
   7. **Key-Value Table**: This is a ***32x32 RAM*** that supports the key-value store in RMT pipeline. It is in **Action Engine**. (XG:这里我暂时不知道数字应该怎么改)
@@ -219,7 +228,7 @@ Each module will check whether it is the target of the packet: if so, the module
 
   1. We made each table dual-port RAM or CAM, thus making sure that the control packet will have no influence on the data path in all the modules. The entries will be modified using the write port.
 
-  2. The 2nd layer index (lowest 3b) of the Module ID is: **0x0** for Parser, **0x1** for Key Extractor, **0x2** for Lookup Engine, **0x3** for Action Engine, **0x5** for Deparser.
+  2. The 2nd layer index (lowest 3b) of the Module ID is: **0x0** for Parser, **0x1** for Key Extractor, **0x2** for Lookup Engine, **0x3** for Action Engine, **0x5** for Deparser. We will use `resv`to indicate which sub-match unit is to be updated.
 
   3. In order to have better isolation between control and data path, we **added a module (pkt_filter) in front of the RMT pipeline to filter out control packets**, and feed the control packets to the pipeline using a different AXIS channel.
 
