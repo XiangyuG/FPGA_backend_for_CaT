@@ -55,7 +55,7 @@ control ingress(inout headers hdr,
             hdr.pkts.pkt_0 : exact;
         }
         actions = {
-            sampling;
+            action_1_0;
         }
         const entries = {
             (5) : action_1_0();
